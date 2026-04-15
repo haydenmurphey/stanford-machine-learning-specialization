@@ -2,6 +2,8 @@
 
 This repository contains my personal notes // Python code for the **Machine Learning Specialization** by Stanford University and DeepLearning.AI on Coursera.
 
+The course is taught by **Andrew Ng**
+
 The repository is organized by the three main courses:
 
 1. **Course 1: Supervised Machine Learning**
@@ -11,7 +13,7 @@ The repository is organized by the three main courses:
 3. **Course 3: Unsupervised Learning & Reinforcement Learning**
    * Clustering, Anomaly Detection, and Recommender Systems.
 
-## Tools Used
+---
 
 All code is written in standard Python scripts. 
 * **Python 3**
