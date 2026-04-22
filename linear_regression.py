@@ -1,8 +1,15 @@
+"""
+Personal Lab Notes: Linear Regression & Logistic Regression
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import math
+
+# ==============================================================================
+# PART 1: LINEAR REGRESSION
+# ==============================================================================
 
 # Data Loading
 x_train = np.array([6.1101, 5.5277, 8.5186, 7.0032, 5.8598])
@@ -198,3 +205,205 @@ print(f"For population = 35,000, we predict a profit of ${predict1*10000:.2f}")
 # Example 2: Predict profit for a city with 70,000 people (Input x = 7.0)
 predict2 = 7.0 * w_final + b_final
 print(f"For population = 70,000, we predict a profit of ${predict2*10000:.2f}")
+
+
+# ==============================================================================
+# PART 2: LOGISTIC REGRESSION (Classification)
+# ==============================================================================
+# Note: Redefining compute_cost, compute_gradient, and gradient_descent below
+# updates them to use Logistic Regression formulas (Log-Loss instead of MSE).
+
+def sigmoid(z):
+    """
+    Compute the sigmoid of z
+    
+    Args:
+        z (scalar or ndarray): A scalar or numpy array of any size.
+    Returns:
+        g (scalar or ndarray): sigmoid(z), with the same shape as z.
+    """
+    g = 1 / (1 + np.exp(-z))
+    return g
+
+def compute_cost(X, y, w, b, *argv):
+    """
+    Computes the Log-Loss cost over all examples for logistic regression.
+    
+    Args:
+      X : (ndarray Shape (m,n)) data, m examples by n features
+      y : (ndarray Shape (m,))  target value 
+      w : (ndarray Shape (n,))  values of parameters of the model      
+      b : (scalar)              value of bias parameter of the model
+    Returns:
+      total_cost : (scalar) cost 
+    """
+    m, n = X.shape
+    loss_sum = 0 
+
+    for i in range(m): 
+        z_wb = 0 
+        for j in range(n): 
+            z_wb += w[j] * X[i][j] 
+        z_wb += b 
+
+        f_wb = sigmoid(z_wb)
+        loss = -y[i] * np.log(f_wb) - (1 - y[i]) * np.log(1 - f_wb)
+        loss_sum += loss
+
+    total_cost = (1 / m) * loss_sum  
+    return total_cost
+
+def compute_gradient(X, y, w, b, *argv): 
+    """
+    Computes the gradient for logistic regression.
+ 
+    Args:
+      X : (ndarray Shape (m,n)) data, m examples by n features
+      y : (ndarray Shape (m,))  target value 
+      w : (ndarray Shape (n,))  values of parameters of the model      
+      b : (scalar)              value of bias parameter of the model
+    Returns
+      dj_db : (scalar)             The gradient of the cost w.r.t. the parameter b. 
+      dj_dw : (ndarray Shape (n,)) The gradient of the cost w.r.t. the parameters w. 
+    """
+    m, n = X.shape
+    dj_dw = np.zeros(w.shape)
+    dj_db = 0.
+
+    for i in range(m):
+        z_wb = 0
+        for j in range(n): 
+            z_wb += X[i, j] * w[j]
+        z_wb += b
+        f_wb = sigmoid(z_wb)
+
+        dj_db_i = f_wb - y[i]
+        dj_db += dj_db_i
+
+        for j in range(n):
+            dj_dw_ij = (f_wb - y[i]) * X[i, j]
+            dj_dw[j] += dj_dw_ij
+
+    dj_dw = dj_dw / m
+    dj_db = dj_db / m
+        
+    return dj_db, dj_dw
+
+def predict(X, w, b): 
+    """
+    Predict whether the label is 0 or 1 using learned logistic
+    regression parameters w and b.
+    
+    Args:
+      X : (ndarray Shape (m,n)) data, m examples by n features
+      w : (ndarray Shape (n,))  values of parameters of the model      
+      b : (scalar)              value of bias parameter of the model
+    Returns:
+      p : (ndarray (m,)) The predictions for X using a threshold at 0.5
+    """
+    m, n = X.shape   
+    p = np.zeros(m)
+   
+    for i in range(m):   
+        z_wb = 0
+        for j in range(n): 
+            z_wb += X[i, j] * w[j]
+        z_wb += b
+        
+        f_wb = sigmoid(z_wb)
+        p[i] = f_wb >= 0.5
+        
+    return p
+
+
+# ==============================================================================
+# PART 3: REGULARIZED LOGISTIC REGRESSION
+# ==============================================================================
+
+def compute_cost_reg(X, y, w, b, lambda_ = 1):
+    """
+    Computes the cost over all examples for regularized logistic regression.
+    
+    Args:
+      X : (ndarray Shape (m,n)) data, m examples by n features
+      y : (ndarray Shape (m,))  target value 
+      w : (ndarray Shape (n,))  values of parameters of the model      
+      b : (scalar)              value of bias parameter of the model
+      lambda_ : (scalar, float) Controls amount of regularization
+    Returns:
+      total_cost : (scalar)     cost 
+    """
+    m, n = X.shape
+    
+    # Calls the compute_cost function implemented above
+    cost_without_reg = compute_cost(X, y, w, b) 
+    
+    reg_cost = 0.
+    for j in range(n):
+        reg_cost_j = w[j]**2 
+        reg_cost += reg_cost_j
+        
+    # Multiply by lambda / 2m outside the loop
+    reg_cost = (lambda_ / (2 * m)) * reg_cost
+    
+    total_cost = cost_without_reg + reg_cost
+    return total_cost
+
+def compute_gradient_reg(X, y, w, b, lambda_ = 1): 
+    """
+    Computes the gradient for logistic regression with regularization.
+ 
+    Args:
+      X : (ndarray Shape (m,n)) data, m examples by n features
+      y : (ndarray Shape (m,))  target value 
+      w : (ndarray Shape (n,))  values of parameters of the model      
+      b : (scalar)              value of bias parameter of the model
+      lambda_ : (scalar,float)  regularization constant
+    Returns
+      dj_db : (scalar)             The gradient of the cost w.r.t. the parameter b. 
+      dj_dw : (ndarray Shape (n,)) The gradient of the cost w.r.t. the parameters w. 
+    """
+    m, n = X.shape
+    
+    # Calculate the gradient without regularization first
+    dj_db, dj_dw = compute_gradient(X, y, w, b)
+    
+    # Add the regularization term to dj_dw
+    for j in range(n): 
+        dj_dw_j_reg = (lambda_ / m) * w[j] 
+        dj_dw[j] = dj_dw[j] + dj_dw_j_reg
+        
+    return dj_db, dj_dw
+
+# Optimization algorithm extended to support lambda_ for regularization
+def gradient_descent_reg(x, y, w_in, b_in, cost_function, gradient_function, alpha, num_iters, lambda_): 
+    """
+    Performs batch gradient descent to learn theta. Updates theta by taking 
+    num_iters gradient steps with learning rate alpha. Includes lambda_ for reg.
+    """
+    m = len(x)
+    J_history = []
+    w_history = []
+    
+    w = copy.deepcopy(w_in)
+    b = b_in
+    
+    for i in range(num_iters):
+        # Calculate the gradient and update the parameters
+        dj_db, dj_dw = gradient_function(x, y, w, b, lambda_)   
+
+        # Update Parameters
+        w = w - alpha * dj_dw               
+        b = b - alpha * dj_db              
+       
+        # Save cost J at each iteration
+        if i < 100000:      
+            cost = cost_function(x, y, w, b, lambda_)
+            J_history.append(cost)
+
+        # Print cost at intervals
+        if i % math.ceil(num_iters / 10) == 0 or i == (num_iters - 1):
+            w_history.append(w)
+            print(f"Iteration {i:4}: Cost {float(J_history[-1]):8.2f}")
+        
+    return w, b, J_history, w_history
